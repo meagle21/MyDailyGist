@@ -1,8 +1,10 @@
 import boto3
+import botocore.exceptions
 import shutil
 import os
 import json
 import io
+
 
 os.system("echo Clearing deployments folder so new deployment packages can be generated...")
 
@@ -64,10 +66,13 @@ for file in os.listdir(rf"{parentFolder}/deployments"):
         with open(fullFilePath, 'rb') as existing_zip_file:
             buffer.write(existing_zip_file.read())
         buffer.seek(0)
-        response = client.delete_function(
-            FunctionName=f"get{fileSplit[0]}Feed", #delete the old version so we can add the new one
-        )
-        os.system(f"echo Deleted older version of {fileSplit[0]} already in AWS Lambda.")
+        try:
+            response = client.delete_function(
+                FunctionName=f"get{fileSplit[0]}Feed", #delete the old version so we can add the new one
+            )
+            os.system(f"echo Deleted older version of {fileSplit[0]} already in AWS Lambda.")
+        except client.exceptions.ResourceNotFoundException:
+            pass
         response = client.create_function(
             FunctionName = f"get{fileSplit[0]}Feed",
             Runtime = "python3.9",
