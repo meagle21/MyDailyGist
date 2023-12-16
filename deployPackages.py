@@ -1,7 +1,11 @@
-import boto3, shutil, os, json, zipfile, io
-
+import boto3
+import shutil
+import os
+import json
+import io
 
 os.system("echo Clearing deployments folder so new deployment packages can be generated...")
+
 # delete files from deployments folder so new ones can be generated
 # Iterate over all files and subdirectories in the given folder
 for root, dirs, files in os.walk("deployments", topdown=False):
