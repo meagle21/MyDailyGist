@@ -22,6 +22,7 @@ sitePackagesPath = r"Lib/site-packages"
 pythonPackgesForDeployment = ["feedparser", "sgmllib.py", "six.py"]
 parentFolder = os.getcwd()
 jsonFile = json.load(open("aws_access.json"))[0]
+associated_files = json.load(open("associatedFiles.json"))[0]
 awsAccessKey, awsSecretAccessKey = jsonFile["access_key"], jsonFile["secret_access_key"]
 os.system("echo Establishing connection to AWS Lambda.")
 client = boto3.client(service_name = "lambda",
@@ -37,8 +38,11 @@ for file in os.listdir(parentFolder): #iterate through files in the parent folde
         folderForDeployment = rf"deployments\{fileNoPy}" #generate the folder in the deployments folder
         fileName = rf"{parentFolder}/{file}" #get the full file path that we are going to move
         fileForDeployment = rf"{folderForDeployment}/lambda_function.py" #generate the file name with the file path leading to deployments folder
+        associated_files_deployment_location = rf"{folderForDeployment}/associatedFiles.json"
+        associated_files_current = rf"{parentFolder}/associatedFiles.json"
         os.mkdir(folderForDeployment) #create the folder for the deployment package
         shutil.copy(fileName, fileForDeployment) #copy the python file from this folder to the deployment folder
+        shutil.copy(associated_files_current, associated_files_deployment_location)
         for pythonPackage in pythonPackgesForDeployment: #iterate through the python packages to include the deployment package
             currentLocation = rf"{parentFolder}/{sitePackagesPath}/{pythonPackage}" #generate the current location of the python package
             deploymentLocation = rf"{parentFolder}/{folderForDeployment}/{pythonPackage}" #generate the location of the deployment package
@@ -47,18 +51,20 @@ for file in os.listdir(parentFolder): #iterate through files in the parent folde
             else: #if the python package is just a python file
                 shutil.copy(currentLocation, deploymentLocation) #run the copy function that applies to files
         fileCount = len(os.listdir(folderForDeployment)) #get the number of files/folders in the deployment folder
-        if(fileCount == 4): #if there are 4 folders/files (this is the amount there should be), this acts as a check to ensure everything got copied over
+        if(fileCount == 5): #if there are 4 folders/files (this is the amount there should be), this acts as a check to ensure everything got copied over
             shutil.make_archive(folderForDeployment, 'zip', folderForDeployment) #convert the deployment folder to a zip file for transfer to AWS Lambda
             os.system(f"echo Completed deployment pacakge for: {fileNoPy}.") #print message saying that the deployment package was created successfully
         else:
             Exception(f"There was an error creating the following package: {fileNoPy}.") #if the file count isn't correct, throw an error saying there was an issue with generating the deployment package
-os.system("echo Beginning generation of deployment package for email generation lambda...")
 python_packages_for_email_script = ["boto3", "botocore", "bs4", "sgmllib.py", "six.py"]
 email_file_for_deployment = rf"{parentFolder}/emailGenerator.py" #get the full file path that we are going to move
 folder_for_email_generator_deployment = rf"{parentFolder}/deployments/emailGenerator"
 email_generation_script_for_deployment = rf"{folder_for_email_generator_deployment}/lambda_function.py" #generate the file name with the file path leading to deployments folder
+associated_files_current = rf"{parentFolder}/associatedFiles.json"
+associated_files_deployment_location = rf"{folder_for_email_generator_deployment}/associatedFiles.json"
 os.mkdir(folder_for_email_generator_deployment) #create the folder for the deployment package
 shutil.copy(email_file_for_deployment, email_generation_script_for_deployment) #copy the python file from this folder to the deployment folder
+shutil.copy(associated_files_current, associated_files_deployment_location)
 for email_package in python_packages_for_email_script:
     current_email_python_package_location = rf"{parentFolder}/{sitePackagesPath}/{email_package}" #generate the current location of the python package
     deployment_email_python_package_location = rf"{folder_for_email_generator_deployment}/{email_package}" #generate the location of the deployment package
@@ -107,3 +113,9 @@ for file in os.listdir(rf"{parentFolder}/deployments"):
             os.system(f"echo Successfully uploaded: {file_name_only} to AWS Lambda.")
         else:
             Exception(f"There was an error in uploading {file_name_only} to AWS Lambda.")
+os.system("echo Beginning upload of user interests file to AWS S3...")
+interests_file_name = "user_interests_relations.json"
+s3_client = boto3.client(service_name = "s3", region_name = "us-east-2",
+                         aws_access_key_id = awsAccessKey, aws_secret_access_key = awsSecretAccessKey)
+s3_client.upload_file(interests_file_name, associated_files["BucketName"], interests_file_name)
+os.system("echo Completed upload of user interest file to AWS S3.")

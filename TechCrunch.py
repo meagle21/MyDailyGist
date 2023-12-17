@@ -6,6 +6,8 @@ from datetime import datetime
 def lambda_handler(event, context):
     tech_crunch_feed_url = r"https://techcrunch.com/feed/"
     feed = feedparser.parse(tech_crunch_feed_url).entries #get the entries in the feed
+    associated_files = json.load(open("associatedFiles.json"))[0]
+    bucket_name = associated_files["BucketName"]
     tech_crunch_feed = []
     for entry in feed:
         template_dict = {"Title" : "", "Author" : "", "Link" : "", "Published_Parsed" : "", "Summary" : "", "Tags" : ""} #template dict to store all the entry info
@@ -30,8 +32,8 @@ def lambda_handler(event, context):
         tech_crunch_feed.append(template_dict) #append the filled out dictionary to the list of dictionaries
     lambda_output = [dict(t) for t in {tuple(tech_crunch_feed_dict.items()) for tech_crunch_feed_dict in tech_crunch_feed}] #remove all duplicates
     as_json = json.dumps(lambda_output)
-    s3 = boto3.resource(service_name = "s3", region_name = "us-east-1")
+    s3 = boto3.resource(service_name = "s3", region_name = "us-east-2")
     current_date_time = datetime.now()
     formatted_date = current_date_time.strftime('%m_%d_%Y')
-    s3.Bucket("my-daily-gist-raw-data-warehouse-ohio").put_object(Key=f"TechCrunch/feed_{formatted_date}.json", Body=as_json)
+    s3.Bucket(bucket_name).put_object(Key=f"TechCrunch/feed_{formatted_date}.json", Body=as_json)
     return {'statusCode': 200, 'body': f"Succesfully uploaded feed_{formatted_date}.json to S3."}
