@@ -37,7 +37,7 @@ os.system("echo Beginning generation of deployment packages...")
 for file in os.listdir(parentFolder): #iterate through files in the parent folder
     splitFileName = file.split(".") #split file name
     extension, fileNoPy = splitFileName[-1], splitFileName[0] #get thefile extension and the name of the file itself
-    if((extension == 'py') and (fileNoPy != "deployPackages")): #if the file is a python file and not this file go through deployment package creation process
+    if extension == 'py' and fileNoPy not in ["deployPackages", "emailGenerator", "updateUserConfig"]: #if the file is a python file and not this file go through deployment package creation process
         folderForDeployment = rf"deployments\{fileNoPy}" #generate the folder in the deployments folder
         fileName = rf"{parentFolder}/{file}" #get the full file path that we are going to move
         fileForDeployment = rf"{folderForDeployment}/lambda_function.py" #generate the file name with the file path leading to deployments folder
@@ -46,7 +46,7 @@ for file in os.listdir(parentFolder): #iterate through files in the parent folde
         for pythonPackage in pythonPackgesForDeployment: #iterate through the python packages to include the deployment package
             currentLocation = rf"{parentFolder}/{sitePackagesPath}/{pythonPackage}" #generate the current location of the python package
             deploymentLocation = rf"{parentFolder}/{folderForDeployment}/{pythonPackage}" #generate the location of the deployment package
-            if(pythonPackage.split(".")[-1] != "py"): #if the python package is a folder
+            if pythonPackage.split(".")[-1] != "py": #if the python package is a folder
                 shutil.copytree(currentLocation, deploymentLocation) #run the copy function that applies to folders
             else: #if the python package is just a python file
                 shutil.copy(currentLocation, deploymentLocation) #run the copy function that applies to files
@@ -61,7 +61,7 @@ deploymentPackages = []
 for file in os.listdir(rf"{parentFolder}/deployments"):
     fileSplit = file.split(".")
     fullFilePath = f"{parentFolder}/deployments/{file}"
-    if(fileSplit[-1] == "zip"):
+    if fileSplit[-1] == "zip":
         buffer = io.BytesIO() #have to store the zip file as a buffer object to upload to AWS Lambda via API
         with open(fullFilePath, 'rb') as existing_zip_file:
             buffer.write(existing_zip_file.read())
@@ -82,7 +82,7 @@ for file in os.listdir(rf"{parentFolder}/deployments"):
             Timeout = 30
         )
         responseStatusCode = response["ResponseMetadata"]["HTTPStatusCode"]
-        if((responseStatusCode == 200) or (responseStatusCode == 201)):
+        if responseStatusCode == 200 or responseStatusCode == 201:
             os.system(f"echo Successfully uploaded: {fileSplit[0]} to AWS Lambda.")
         else:
             Exception(f"There was an error in uploading {fileSplit[0]} to AWS Lambda.")
