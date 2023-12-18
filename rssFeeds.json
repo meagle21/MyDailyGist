@@ -1,0 +1,10 @@
+[
+    {"Feeds" : {
+        "Gizmodo" : "https://gizmodo.com/rss",
+        "NYT" : "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
+        "ArsTechnica" : "https://feeds.arstechnica.com/arstechnica/index/",
+        "TechCrunch" : "https://techcrunch.com/feed/",
+        "TheHill" : "https://thehill.com/homenews/feed/",
+        "YCombinator" : "https://news.ycombinator.com/rss"}
+        }
+]
