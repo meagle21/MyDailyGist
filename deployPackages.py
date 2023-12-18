@@ -53,7 +53,7 @@ for file in os.listdir(parentFolder): #iterate through files in the parent folde
         fileCount = len(os.listdir(folderForDeployment)) #get the number of files/folders in the deployment folder
         if(fileCount == 5): #if there are 4 folders/files (this is the amount there should be), this acts as a check to ensure everything got copied over
             shutil.make_archive(folderForDeployment, 'zip', folderForDeployment) #convert the deployment folder to a zip file for transfer to AWS Lambda
-            os.system(f"echo Completed deployment pacakge for: {fileNoPy}.") #print message saying that the deployment package was created successfully
+            os.system(f"echo Completed deployment package for: {fileNoPy}.") #print message saying that the deployment package was created successfully
         else:
             Exception(f"There was an error creating the following package: {fileNoPy}.") #if the file count isn't correct, throw an error saying there was an issue with generating the deployment package
 python_packages_for_email_script = ["boto3", "botocore", "bs4", "sgmllib.py", "six.py"]
@@ -78,13 +78,35 @@ for email_package in python_packages_for_email_script:
         os.system(f"echo Completed deployment pacakge for: emailGenerator.") #print message saying that the deployment package was created successfully
     else:
         Exception(f"There was an error creating the following package: emailGenerator.")
+python_packages_for_send_email_script = ["boto3", "sgmllib.py", "six.py", "botocore"]
+send_email_file_for_deployment = rf"{parentFolder}/emailGenerator.py" #get the full file path that we are going to move
+folder_for_email_sender_deployment = rf"{parentFolder}/deployments/sendEmail"
+email_sender_script_for_deployment = rf"{folder_for_email_sender_deployment}/lambda_function.py" #generate the file name with the file path leading to deployments folder
+associated_files_current = rf"{parentFolder}/associatedFiles.json"
+associated_files_email_send_deployment_location = rf"{folder_for_email_sender_deployment}/associatedFiles.json"
+os.mkdir(folder_for_email_sender_deployment) #create the folder for the deployment package
+shutil.copy(send_email_file_for_deployment, email_sender_script_for_deployment) #copy the python file from this folder to the deployment folder
+shutil.copy(associated_files_current, associated_files_email_send_deployment_location)
+for send_package in python_packages_for_send_email_script:
+    current_email_sender_python_package_location = rf"{parentFolder}/{sitePackagesPath}/{send_package}" #generate the current location of the python package
+    deployment_email_sender_python_package_location = rf"{folder_for_email_sender_deployment}/{send_package}" #generate the location of the deployment package
+    if send_package.split(".")[-1] != "py": #if the python package is a folder
+        shutil.copytree(current_email_sender_python_package_location, deployment_email_sender_python_package_location) #run the copy function that applies to folders
+    else: #if the python package is just a python file
+        shutil.copy(current_email_sender_python_package_location, deployment_email_sender_python_package_location)
+    file_count = len(os.listdir(folder_for_email_sender_deployment)) #get the number of files/folders in the deployment folder
+    if(file_count == 4): #if there are 4 folders/files (this is the amount there should be), this acts as a check to ensure everything got copied over
+        shutil.make_archive(folder_for_email_sender_deployment, 'zip', folder_for_email_sender_deployment) #convert the deployment folder to a zip file for transfer to AWS Lambda
+        os.system(f"echo Completed deployment pacakge for: emailSender.") #print message saying that the deployment package was created successfully
+    else:
+        Exception(f"There was an error creating the following package: emailSender.")
 os.system("echo Beginning upload of deployment packages to AWS Lambda...")
 deploymentPackages = []
 for file in os.listdir(rf"{parentFolder}/deployments"):
     fileSplit = file.split(".")
     fullFilePath = f"{parentFolder}/deployments/{file}"
     file_name_only = fileSplit[0]
-    if(file_name_only != 'emailGenerator'):
+    if(file_name_only not in ['emailGenerator', 'sendEmail']):
         function_name = f"get{file_name_only}Feed"
     else:
         function_name = file_name_only
@@ -106,6 +128,7 @@ for file in os.listdir(rf"{parentFolder}/deployments"):
             Role = "arn:aws:iam::159535920112:role/lambda-newsletter-role", #created in AWS IAM console
             Handler = "lambda_function.lambda_handler", #this function name must be included in the main python file
             Code = {"ZipFile": buffer.read()},
+            Environment={'Variables': {'ASSOCIATED_FILES': 'associatedFiles.json'}},
             Timeout = 30
         )
         responseStatusCode = response["ResponseMetadata"]["HTTPStatusCode"]

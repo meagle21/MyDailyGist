@@ -2,15 +2,17 @@ import feedparser
 import json
 import boto3
 from datetime import datetime
+import os
 
 def lambda_handler(event, context):
     y_combinator_feed_url = r"https://news.ycombinator.com/rss"
     feed = feedparser.parse(y_combinator_feed_url).entries #get the entries in the feed
-    associated_files = json.load(open("associatedFiles.json"))[0]
+    associated_file_name = os.environ['ASSOCIATED_FILES']
+    associated_files = json.load(open(associated_file_name))[0]
     bucket_name = associated_files["BucketName"]
     y_combinator_feed = []
     for entry in feed:
-        template_dict = {"Title" : "", "Author" : "", "Link" : "", "Published_Parsed" : "", "Summary" : "", "Tags" : ""} #template dict to store all the entry info
+        template_dict = {"Title" : "", "Author" : "", "Link" : "", "Published_Parsed" : "", "Summary" : "", "Thumbnail" : ""} #template dict to store all the entry info
         template_dict['Title'] = entry["title"] #put title in dictionary
         authors_as_string = '' #empty string to store a more well formatted author list
         try:
