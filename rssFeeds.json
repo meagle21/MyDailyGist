@@ -1,10 +1,19 @@
 [
     {"Feeds" : {
-        "Gizmodo" : "https://gizmodo.com/rss",
-        "NYT" : "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
-        "ArsTechnica" : "https://feeds.arstechnica.com/arstechnica/index/",
-        "TechCrunch" : "https://techcrunch.com/feed/",
-        "TheHill" : "https://thehill.com/homenews/feed/",
-        "YCombinator" : "https://news.ycombinator.com/rss"}
-        }
+    "Gizmodo" : "https://gizmodo.com/rss",
+    "NYT" : "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
+    "ArsTechnica" : "https://feeds.arstechnica.com/arstechnica/index/",
+    "TechCrunch" : "https://techcrunch.com/feed/",
+    "TheHill" : "https://thehill.com/homenews/feed/",
+    "YCombinator" : "https://news.ycombinator.com/rss",
+    "ZDNet" : "https://www.zdnet.com/us/rss.xml",
+    "WSJ Market News" : "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",
+    "WSJ Tech News" : "https://feeds.a.dj.com/rss/RSSWSJD.xml",
+    "WSJ World News" : "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
+    "NYT Business" : "https://rss.nytimes.com/services/xml/rss/nyt/Economy.xml",
+    "NYT Tech News" : "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
+    "Financial Times" : "https://www.ft.com/world?format=rss",
+    "Financial Times Technology" : "https://www.ft.com/technology-sector?format=rss",
+    "MIT Technology Review" : "https://cdn.technologyreview.com/topnews.rss"}
+    }
 ]

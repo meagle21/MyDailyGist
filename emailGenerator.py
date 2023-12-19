@@ -1,14 +1,16 @@
 import json
 import os
+import random
 from datetime import datetime
 
 import boto3
+import pytz
 from bs4 import BeautifulSoup
 
 
 def lambda_handler(event, context):
     ### GET TODAYS DATE
-    current_date_time = datetime.now()
+    current_date_time = datetime.utcnow().astimezone(pytz.timezone("US/Eastern"))
     formatted_date = current_date_time.strftime("%m_%d_%Y")
     interests_file, bucket_name, region_name = (
         os.environ["INTERESTS_FILE_NAME"],
@@ -26,8 +28,7 @@ def lambda_handler(event, context):
     interest_list = list(interest_dict.keys())
     html_output = "<html><body><header>Good morning!</header>"
     for interest in interest_list:
-        sub_interests = interest_storage_file["InterestTags"][interest]
-        tags_for_sorting = {}
+        tags = []
         for website in interest_dict[interest]:
             file_name = rf"{website}/feed_{formatted_date}.json"
             temp_file_store_website = rf"/tmp/{file_name}".replace(f"/{website}", "")
@@ -36,28 +37,13 @@ def lambda_handler(event, context):
             )
             object_from_s3 = json.load(open(temp_file_store_website))
             for article in object_from_s3:
-                interest_level = 0
-                tags = article["Tags"].lower()
-                for sub_interest in sub_interests:
-                    if sub_interest in tags:
-                        interest_level += 1
-                if interest_level > 0:
-                    a_tag_template = (
-                        f"<a href = {article['Link']}>{article['Title']}</a><br>"
-                    )
-                    tags_for_sorting[a_tag_template] = interest_level
-        tags_sorted = dict(
-            sorted(tags_for_sorting.items(), key=lambda item: item[1], reverse=True)
-        )
-        tags_sorted_as_list = list(tags_sorted.keys())[:15]
-        for i in range(len(tags_sorted_as_list)):
-            tag = tags_sorted_as_list[i]
-            if i == 0:
-                for article in object_from_s3:
-                    if article["Title"] in tag:
-                        html_output += f"<p>{article['Summary']}</p>"
-            else:
-                html_output += tag
+                a_tag_template = (
+                    f"<a href = {article['Link']}>{article['Title']}, {website}</a><br>"
+                )
+                tags.append(a_tag_template)
+        random_indexes = random.sample(range(len(tags)), 15)
+        for i in random_indexes:
+            html_output += random_indexes[i]
         html_output += "</body></html>"
         soup = BeautifulSoup(html_output, "html.parser").prettify()
         s3.Bucket(bucket_name).put_object(

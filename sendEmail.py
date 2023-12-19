@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 
 import boto3
+import pytz
 
 
 def lambda_handler(event, context):
@@ -11,7 +12,7 @@ def lambda_handler(event, context):
     region_name = os.environ["REGION_NAME"]
     interest_file_for_store = os.environ["INTEREST_TEMP_FILE_PATH"]
     email_templates_folder = os.environ["EMAIL_TEMPLATES_FOLDER"]
-    current_date_time = datetime.now()
+    current_date_time = datetime.utcnow().astimezone(pytz.timezone("US/Eastern"))
     formatted_date = current_date_time.strftime("%m_%d_%Y")
     s3_client = boto3.resource(service_name="s3", region_name=region_name)
     interest_response = s3_client.Bucket(bucket_name).download_file(

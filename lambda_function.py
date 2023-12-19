@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 
 import boto3
+import pytz
 
 from GetRSSFeedClass import GetRSSFeedClass
 
@@ -25,7 +26,7 @@ def lambda_handler(event, context):
     ]
     as_json = json.dumps(lambda_output)
     s3 = boto3.resource(service_name="s3", region_name=region_name)
-    current_date_time = datetime.now()
+    current_date_time = datetime.utcnow().astimezone(pytz.timezone("US/Eastern"))
     formatted_date = current_date_time.strftime("%m_%d_%Y")
     s3.Bucket(bucket_name).put_object(
         Key=f"{rss_feed_name}/feed_{formatted_date}.json", Body=as_json

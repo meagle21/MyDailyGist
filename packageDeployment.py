@@ -54,7 +54,8 @@ client = boto3.client(
     aws_secret_access_key=aws_secret_access_key_value,
 )
 for rss_feed in rss_feeds.items():
-    rss_feed_name, rss_feed_url = rss_feed[0], rss_feed[1]
+    rss_feed_name = rss_feed[0].replace(" ", "")
+    rss_feed_url = rss_feed[1]
     rss_feed_drop_location = f"{drop_location}/{rss_feed_name}"
     lambda_name = f"get{rss_feed_name}Feed"
     os.mkdir(rss_feed_drop_location)
