@@ -31,27 +31,25 @@ def lambda_handler(event, context):
     for interest in interests_list:
         formatted_subject = f"My {interest} Digest - {date_for_subject}"
         user_emails = list(emails_and_interests[interest].values())
-        if len(user_emails) > 0:
-            file_name = (
-                rf"{email_templates_folder}/feed_{interest}_{formatted_date}.html"
-            )
-            feed_response = s3_client.Bucket(bucket_name).download_file(
-                file_name, rf"/tmp/feed_{interest}_{formatted_date}.html"
-            )
-            object_from_s3 = open(
-                rf"/tmp/feed_{interest}_{formatted_date}.html", encoding="utf-8"
-            ).read()
-            html_content = str(object_from_s3)
-            ses_client = boto3.client(service_name="ses", region_name=region_name)
-            ses_client.send_email(
-                Source=f"My{interest}Digest@www.mydailygist.com",
-                Destination={"BccAddresses": user_emails},
-                Message={
-                    "Subject": {"Data": formatted_subject},
-                    "Body": {
-                        "Text": {"Charset": "UTF-8", "Data": "test"},
-                        "Html": {"Charset": "UTF-8", "Data": html_content},
-                    },
+        file_name = rf"{email_templates_folder}/feed_{interest}_{formatted_date}.html"
+
+        feed_response = s3_client.Bucket(bucket_name).download_file(
+            file_name, rf"/tmp/feed_{interest}_{formatted_date}.html"
+        )
+        object_from_s3 = open(
+            rf"/tmp/feed_{interest}_{formatted_date}.html", encoding="utf-8"
+        ).read()
+        html_content = str(object_from_s3)
+        ses_client = boto3.client(service_name="ses", region_name=region_name)
+        ses_client.send_email(
+            Source=f"My{interest}Digest@www.mydailygist.com",
+            Destination={"BccAddresses": user_emails},
+            Message={
+                "Subject": {"Data": formatted_subject},
+                "Body": {
+                    "Text": {"Charset": "UTF-8", "Data": "test"},
+                    "Html": {"Charset": "UTF-8", "Data": html_content},
                 },
-            )
+            },
+        )
     return {"statusCode": 200, "body": f"Successfully sent out emails."}

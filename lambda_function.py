@@ -28,7 +28,8 @@ def lambda_handler(event, context):
     s3 = boto3.resource(service_name="s3", region_name=region_name)
     current_date_time = datetime.utcnow().astimezone(pytz.timezone("US/Eastern"))
     formatted_date = current_date_time.strftime("%m_%d_%Y")
+    rss_feed_for_folder_name = rss_feed_name.replace(" ", "")
     s3.Bucket(bucket_name).put_object(
-        Key=f"{rss_feed_name}/feed_{formatted_date}.json", Body=as_json
+        Key=f"{rss_feed_for_folder_name}/feed_{formatted_date}.json", Body=as_json
     )
-    return {"statusCode": 200, "body": "Uploaded {rss_feed_name}'s RSS feed to S3."}
+    return {"statusCode": 200, "body": f"Uploaded {rss_feed_name}'s RSS feed to S3."}

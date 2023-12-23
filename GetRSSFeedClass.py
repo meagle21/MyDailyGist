@@ -28,8 +28,11 @@ class GetRSSFeedClass:
         authors_as_string = (
             ""  # empty string to store a more well formatted author list
         )
-        for author in authors:  # for each author name in the list of authors
-            authors_as_string += f"{authors['name']}, "  # get name from dictionary storing authors and create comma deliminated
+        if isinstance(authors, list):
+            for author in authors:  # for each author name in the list of authors
+                authors_as_string += f"{author['name']}, "  # get name from dictionary storing authors and create comma deliminated
+        else:
+            authors_as_string = authors
         return authors_as_string[
             :-2
         ]  # get the well formatted list and remove the ending comma
@@ -40,14 +43,30 @@ class GetRSSFeedClass:
         except KeyError:
             tags = ""
         try:
-            authors = self.clean_tags(entry["authors"])
+            authors = self.clean_authors(entry["authors"])
         except KeyError:
             authors = ""
+        try:
+            summary = entry["summary"]
+        except KeyError:
+            summary = ""
+        try:
+            parsed_publish_date = entry["published_parsed"]
+        except KeyError:
+            parsed_publish_date = ""
+        try:
+            title = entry["title"]
+        except:
+            title = ""
+        try:
+            link = entry["link"]
+        except:
+            link = ""
         return {
-            "Title": entry["title"],
+            "Title": title,
             "Author": authors,
-            "Link": entry["link"],
-            "Published_Parsed": entry["published_parsed"],
+            "Link": link,
+            "Published_Parsed": parsed_publish_date,
             "Tags": self.clean_tags(tags),
-            "Summary": entry["summary"],
+            "Summary": summary,
         }
