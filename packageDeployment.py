@@ -6,20 +6,23 @@ import shutil
 import boto3
 import botocore.exceptions
 
-SITE_PACKAGES_PATH = r"Lib/site-packages"
-AWS_ACCESS_KEY_FILE, AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY = (
-    "aws_access.json",
-    "access_key",
-    "secret_access_key",
-)
-FILE_DEPENDENCY_JSON_FILE = "associatedFiles.json"
-RSS_FEED_JSON_FILE, FEED_KEY = "rssFeeds.json", "Feeds"
-DEPLOYMENT_FOLDER_NAME = "deployments"
+os.system("python pepComplyFiles.py")
+
+aws_access = json.load(open("aws_access.json"))[0]
+
+ACCESS_KEY = aws_access["access_key"]
+SECRET_ACCESS_KEY = aws_access["secret_access_key"]
+
+SITE_PACKAGES_PATH = "Lib/site-packages"
+BUCKET_NAME = "my-daily-gist-raw-data-warehouse-ohio"
+INTERESTS_FILE_NAME = "user_interests_relations.json"
+
 RSS_FEED_CLASS_NAME = "GetRSSFeedClass.py"
 MAIN_FUNCTION_NAME = "lambda_function.py"
-INTERESTS_FILE_NAME = "user_interests_relations.json"
+DEPLOYMENT_FOLDER_NAME = "deployments"
 SUCCESSFUL_STATUS_CODES = [200, 201]
 PIPELINE_SCRIPTS = ["emailGenerator", "sendEmail"]
+
 parent_folder = os.getcwd()
 feed_dependencies_for_deployment = [
     f"{parent_folder}/{SITE_PACKAGES_PATH}/feedparser",
@@ -32,15 +35,14 @@ pipeline_script_dependencies = [
     f"{parent_folder}/{SITE_PACKAGES_PATH}/sgmllib.py",
     f"{parent_folder}/{SITE_PACKAGES_PATH}/six.py",
     f"{parent_folder}/{SITE_PACKAGES_PATH}/pytz",
+    f"{parent_folder}/{SITE_PACKAGES_PATH}/requests",
+    f"{parent_folder}/{SITE_PACKAGES_PATH}/chardet",
+    f"{parent_folder}/{SITE_PACKAGES_PATH}/charset_normalizer",
+    f"{parent_folder}/{SITE_PACKAGES_PATH}/idna",
+    f"{parent_folder}/{SITE_PACKAGES_PATH}/certifi",
 ]
 
-json_file = json.load(open(AWS_ACCESS_KEY_FILE))[0]
-associated_files = json.load(open(FILE_DEPENDENCY_JSON_FILE))[0]
-rss_feeds = json.load(open(RSS_FEED_JSON_FILE))[0][FEED_KEY]
-aws_access_key_value, aws_secret_access_key_value = (
-    json_file[AWS_ACCESS_KEY],
-    json_file[AWS_SECRET_ACCESS_KEY],
-)
+rss_feeds = json.load(open("rssFeeds.json"))[0]["Feeds"]
 drop_location = f"{parent_folder}/{DEPLOYMENT_FOLDER_NAME}"
 try:
     os.mkdir(drop_location)
@@ -50,8 +52,8 @@ except FileExistsError:
 client = boto3.client(
     service_name="lambda",
     region_name="us-east-2",
-    aws_access_key_id=aws_access_key_value,
-    aws_secret_access_key=aws_secret_access_key_value,
+    aws_access_key_id=ACCESS_KEY,
+    aws_secret_access_key=SECRET_ACCESS_KEY,
 )
 for rss_feed in rss_feeds.items():
     rss_feed_name = rss_feed[0].replace(" ", "")
@@ -102,7 +104,7 @@ for rss_feed in rss_feeds.items():
         Environment={
             "Variables": {
                 "RSS_FEED_URL": f"{rss_feed_url}",
-                "BUCKET_NAME": associated_files["BucketName"],
+                "BUCKET_NAME": BUCKET_NAME,
                 "REGION_NAME": "us-east-2",
                 "RSS_FEED_NAME": rss_feed_name,
             }
@@ -112,12 +114,14 @@ for rss_feed in rss_feeds.items():
     responseStatusCode = response["ResponseMetadata"]["HTTPStatusCode"]
     if responseStatusCode not in SUCCESSFUL_STATUS_CODES:
         Exception(f"There was an error in uploading {rss_feed} to AWS Lambda.")
+    else:
+        os.system(f"echo Uploaded {rss_feed_name} to AWS Lambda.")
 for pipeline_script in PIPELINE_SCRIPTS:
     pipeline_script_location = f"{drop_location}/{pipeline_script}"
     pipeline_script_py = f"{parent_folder}/{pipeline_script}.py"
     os.mkdir(pipeline_script_location)
     shutil.copy(
-        f"{pipeline_script_py}", f"{pipeline_script_location}/lambda_function.py"
+        f"{pipeline_script_py}", f"{pipeline_script_location}/{MAIN_FUNCTION_NAME}"
     )
     for pipeline_dependency in pipeline_script_dependencies:
         pipeline_dependency_location = pipeline_dependency.replace(
@@ -156,23 +160,27 @@ for pipeline_script in PIPELINE_SCRIPTS:
         Environment={
             "Variables": {
                 "INTERESTS_FILE_NAME": INTERESTS_FILE_NAME,
-                "BUCKET_NAME": associated_files["BucketName"],
+                "BUCKET_NAME": BUCKET_NAME,
                 "REGION_NAME": "us-east-2",
                 "INTEREST_TEMP_FILE_PATH": "/tmp/interests.json",
                 "EMAIL_TEMPLATES_FOLDER": "GeneratedEmailTemplates",
+                "SUMMARIZE_URL": "https://summarize-texts.p.rapidapi.com/pipeline",
+                "API_KEY": "13e6a75a98mshcbaf5ce48f7e720p1562f7jsn306744810b80",
+                "API_HOST": "summarize-texts.p.rapidapi.com",
             }
         },
-        Timeout=30,
+        Timeout=300,
     )
     responseStatusCode = response["ResponseMetadata"]["HTTPStatusCode"]
     if responseStatusCode not in SUCCESSFUL_STATUS_CODES:
         Exception(f"There was an error in uploading {pipeline_script} to AWS Lambda.")
+    else:
+        os.system(f"echo Uploaded {pipeline_script} to AWS Lambda.")
 s3_client = boto3.client(
     service_name="s3",
     region_name="us-east-2",
-    aws_access_key_id=aws_access_key_value,
-    aws_secret_access_key=aws_secret_access_key_value,
+    aws_access_key_id=ACCESS_KEY,
+    aws_secret_access_key=SECRET_ACCESS_KEY,
 )
-s3_client.upload_file(
-    INTERESTS_FILE_NAME, associated_files["BucketName"], INTERESTS_FILE_NAME
-)
+s3_client.upload_file(INTERESTS_FILE_NAME, BUCKET_NAME, INTERESTS_FILE_NAME)
+os.system(f"echo Uploaded {INTERESTS_FILE_NAME} to AWS S3.")
