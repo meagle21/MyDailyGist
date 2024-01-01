@@ -18,6 +18,11 @@
     "CNN" : "http://rss.cnn.com/rss/cnn_topstories.rss",
     "Fox News": "https://moxie.foxnews.com/google-publisher/latest.xml",
     "Huffington Post" : "https://www.huffpost.com/section/us-news/feed",
-    "Washington Post": "https://www.washingtonpost.com/arcio/rss/category/politics/?itid=lk_inline_manual_2"}
+    "Washington Post": "https://www.washingtonpost.com/arcio/rss/category/politics/?itid=lk_inline_manual_2",
+    "Science Daily" : "https://www.sciencedaily.com/rss/top/science.xml",
+    "Scientific American" : "http://rss.sciam.com/ScientificAmerican-Global",
+    "Wired - Science" : "https://www.wired.com/category/science/feed",
+    "Science" : "https://www.science.org/action/showFeed?type=axatoc&feed=rss&jc=science",
+    "Nature" : "https://www.nature.com/nature.rss"}
     }
 ]
