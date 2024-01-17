@@ -22,11 +22,13 @@ def lambda_handler(event, context):
     emails_and_interests = interests_file["UserInterests"]
     interests_list = list(emails_and_interests.keys())
     date_for_subject = current_date_time.strftime("%B %dth, %Y")
+    if int(date_for_subject.split(" ")[1][0]) == 0:
+        date_for_subject = date_for_subject[1:]
     if "1th" in date_for_subject and "11th" not in date_for_subject:
         date_for_subject = date_for_subject.replace("1th", "1st")
-    elif "2th" in date_for_subject:
+    elif "2th" in date_for_subject and "12th" not in date_for_subject:
         date_for_subject = date_for_subject.replace("2th", "2nd")
-    elif "3th" in date_for_subject:
+    elif "3th" in date_for_subject and "13th" not in date_for_subject:
         date_for_subject = date_for_subject.replace("3th", "3rd")
     for interest in interests_list:
         gist_interest_dict = {
